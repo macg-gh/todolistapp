@@ -12,84 +12,96 @@ app.set('view engine', 'ejs');
 app.use(bodyParser.urlencoded({extended: true}));
 app.use(express.static("public"));
 
-mongoose.connect('mongodb+srv://username:password@mongodbserver/toDoListDB', {useNewUrlParser: true, useUnifiedTopology: true});
+mongoose.connect('mongodb://localhost:27017/toDoListDB', {useNewUrlParser: true, useUnifiedTopology: true, useFindAndModify: false} );
 
 // the useUnifiedTopology option in the client constructor will make this
 // warning go away \/
 
 // (node:2911) [MONGODB DRIVER] Warning: Current Server Discovery and Monitoring
-// engine is deprecated, and will be removed in a future version. To use the new
-// Server Discover and Monitoring engine, pass option
-// { useUnifiedTopology: true } to the MongoClient constructor.
+// engine is deprecated, ...
 
-// The course instructor advises to use useNewUrlParser
-
+// the useNewUrlParser option is used based on course instructor's recommendation.
 
 
 const itemSchema = new mongoose.Schema({
   name: String,
-  list: String
+});
+
+const listSchema = new mongoose.Schema({
+  name: String,
+  items: [itemSchema]
 });
 
 const Item = mongoose.model("Item",itemSchema);
 
+const List = mongoose.model( "List" , listSchema );
+
+const welcome = new Item({
+  name: "Welcome to your to do list.",
+});
+
+const plus = new Item({
+  name: "Hit the + button to add a new item.",
+});
+
+const deleteMsg = new Item({
+  name: "Hit the checkbox to delete an item.",
+});
+
+
 app.get( '/lists/:listTitle' ,  function(req,res){
   const listTitle = _.capitalize(req.params.listTitle);
-  const welcome = new Item({
 
-    name: "Welcome to your to do list.",
-    list: listTitle
-  });
-
-  const plus = new Item({
-    name: "Hit the + button to add a new item.",
-    list: listTitle
-  });
-
-  const deleteMsg = new Item({
-    name: "Hit the checkbox to delete an item.",
-    list: listTitle
-  });
-
-  Item.find( {list: listTitle}, function(err, foundItems)
+  List.findOne( {name: listTitle}, function(err, foundList)
   {
-    if (foundItems.length===0)
+    if (!err)
     {
-      Item.insertMany( [welcome , plus , deleteMsg ] , function(err)
+      if (!foundList)
       {
-        if (err)
-        {
-          console.log("Error received: "+err);
-        }
-        else
-        {
-          console.log("Succesfully added items");
-        }
-        res.redirect("/lists/"+listTitle);
-      });
-    }
-    else //need this because we can't redirect and render on the same level.
-    {
-      Item.find( {list: listTitle}, function(err, listItems){
+        console.log("No list found");
 
-        res.render("list", {listTitle: listTitle, newListItems: listItems });
-      });
+        const list = new List
+        ({
+          name: listTitle,
+          items: [welcome , plus, deleteMsg]
+        });
+
+        console.log(list);
+
+        list.save();
+        res.redirect("/lists/"+listTitle);
+      }
+      else
+      {
+        res.render("list", {listTitle: listTitle, newListItems: foundList.items });
+      }
+    }
+    else
+    {
+      console.log(err);
     }
   });
 });
 
 app.post("/lists/:listTitle", function(req, res){
 
-  const listTitle=req.params.listTitle
+  const listTitle=req.params.listTitle;
 
   const newItem = new Item({
     name: req.body.newItem,
-    list: listTitle
   });
 
-  newItem.save();
+  List.findOneAndUpdate( {name: listTitle} , { $push  : { items : newItem  }  } , function(err , foundList){
+    if(!err)
+    {
+      res.redirect("/lists/"+listTitle);
+    }
+    else
+    {
+      console.log(err);
+    }
+  });
 
-  res.redirect("/lists/"+listTitle);
 
 });
 
@@ -97,16 +109,17 @@ app.post("/delete/:listTitle", function(req, res){
   const listTitle=req.params.listTitle;
   const checkedItemID = req.body.deleteCheckbox;
 
-  Item.deleteOne({_id: checkedItemID} , function(err){
-    if(err){
-      console.log(err);
+  List.findOneAndUpdate( {name: listTitle} , { $pull  : { items : { _id : checkedItemID } }  } , function(err , foundList){
+    if(!err)
+    {
+      res.redirect("/lists/"+listTitle);
     }
-    else{
-      console.log("Successfully deleted item.");
+    else
+    {
+      console.log(err);
     }
   });
 
-  res.redirect("/lists/"+listTitle);
 
 });
 
