@@ -12,7 +12,7 @@ app.set('view engine', 'ejs');
 app.use(bodyParser.urlencoded({extended: true}));
 app.use(express.static("public"));
 
-mongoose.connect('mongodb+srv://user:password@server/toDoListDB', {useNewUrlParser: true, useUnifiedTopology: true});
+mongoose.connect('mongodb+srv://admin-mg:PAJHdirDd777Ovz6jl8FVP5CSqKMSfKw4gIo5mvR@cluster0.xoob9.mongodb.net/toDoListDB', {useNewUrlParser: true, useUnifiedTopology: true});
 
 // the useUnifiedTopology option in the client constructor will make this
 // warning go away \/
