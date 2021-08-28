@@ -130,7 +130,7 @@ app.get("/about", function(req, res){
 });
 
 
-let port = process.ENV.port;
+let port = process.env.port;
 if(port == null || port == ""){
   port=3000;
 }
