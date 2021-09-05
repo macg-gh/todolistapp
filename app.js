@@ -50,6 +50,7 @@ const deleteMsg = new Item({
 
 
 app.get( '/lists/:listTitle' ,  function(req,res){
+  console.log(req.params.listTitle);
   const listTitle = _.capitalize(req.params.listTitle);
   console.log("list Title is: "+ listTitle)
   let thing = _.capitalize("sAdCfC");
