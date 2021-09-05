@@ -52,6 +52,9 @@ const deleteMsg = new Item({
 app.get( '/lists/:listTitle' ,  function(req,res){
   const listTitle = _.capitalize(req.params.listTitle);
   console.log("list Title is: "+ listTitle)
+  let thing = _.capitalize("sAdCfC");
+  console.log(thing);
+
   List.findOne( {name: listTitle}, function(err, foundList)
   {
     if (!err)
